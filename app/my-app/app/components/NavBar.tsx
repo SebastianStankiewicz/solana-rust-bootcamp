@@ -24,7 +24,7 @@ function NavBar() {
 
   const navItems = [
     { href: "/home", label: "All Votes" },
-    { href: "/create", label: "Create a vote" },
+    { href: "/create-vote", label: "Create a vote" },
     { href: "/stats", label: "Statistics" },
   ];
 
