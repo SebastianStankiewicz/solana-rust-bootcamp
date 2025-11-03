@@ -1,31 +1,38 @@
 "use client";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 function Page() {
+  const router = useRouter();
+
   const dummyVoteData = [
     {
       PDA: "9xJkVt1s9...T2bL",
       title: "Should we launch DAO rewards?",
       YES: 0,
       NO: 0,
+      slug: "launch-dao-rewards",
     },
     {
       PDA: "4tLmA21sZ...Rk9P",
       title: "Add staking to Vote on SOL?",
       YES: 204,
       NO: 15,
+      slug: "staking-vote-sol",
     },
     {
       PDA: "7bDeF11qP...Aa8M",
       title: "Use vote credits for discounts?",
       YES: 75,
       NO: 9,
+      slug: "vote-credits-discounts",
     },
     {
       PDA: "1yZwX08fG...J7xR",
       title: "Change proposal minimum?",
       YES: 50,
       NO: 100,
+      slug: "change-proposal-minimum",
     },
   ];
 
@@ -38,46 +45,31 @@ function Page() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
         {dummyVoteData.map((vote, idx) => {
           const totalVotes = vote.YES + vote.NO;
-          
-          // Handle zero votes to prevent division by zero and set colors to neutral
-          if (totalVotes === 0) {
-            return (
-                <div key={idx} className="rounded-xl border border-foreground/10 bg-background/95 p-5 shadow-sm hover:shadow-md transition-all">
-                    <div className="font-mono text-sm text-foreground/70 mb-2">PDA: {vote.PDA}</div>
-                    <div className="font-mono text-lg text-foreground font-semibold mb-4">{vote.title}</div>
-                    <div className="mt-4 space-y-2">
-                        <div className="h-3 w-full bg-foreground/10 rounded-full" />
-                        <div className="flex justify-center font-mono ">
-                            NO VOTES 
-                        </div>
-                    </div>
-                </div>
-            );
-          }
 
-          const YESPercentage = (vote.YES / totalVotes) * 100;
-          const NOPercentage = (vote.NO / totalVotes) * 100;
+          // Calculate percentages
+          const YESPercentage =
+            totalVotes > 0 ? (vote.YES / totalVotes) * 100 : 0;
+          const NOPercentage =
+            totalVotes > 0 ? (vote.NO / totalVotes) * 100 : 0;
 
+          // Determine bar colors
           let yesBarColor = "bg-green-500";
           let noBarColor = "bg-red-500";
 
           if (vote.YES > vote.NO) {
-            // YES wins: YES is GREEN, NO is NEUTRAL/SECONDARY
             noBarColor = "bg-red-700/50"; // Dimmer red
           } else if (vote.NO > vote.YES) {
-            // NO wins: NO is RED, YES is NEUTRAL/SECONDARY
             yesBarColor = "bg-green-700/50"; // Dimmer green
-          } else {
-            // DRAW
+          } else if (vote.YES === vote.NO && totalVotes > 0) {
             yesBarColor = "bg-yellow-500/70";
             noBarColor = "bg-yellow-500/70";
           }
-          
 
           return (
             <div
               key={idx}
-              className="rounded-xl border border-foreground/10 bg-background/95 p-5 shadow-sm hover:shadow-md transition-all"
+              onClick={() => router.push(`/vote/${vote.slug}`)}
+              className="cursor-pointer rounded-xl border border-foreground/10 bg-background/95 p-5 shadow-sm hover:shadow-md transition-all"
             >
               <div className="font-mono text-sm text-foreground/70 mb-2">
                 PDA: {vote.PDA}
@@ -87,30 +79,38 @@ function Page() {
               </div>
 
               <div className="mt-4 space-y-2">
-                <div className="relative h-3 w-full rounded-full overflow-hidden flex">
-                  <div
-                    className={`h-full ${noBarColor} transition-all duration-500`}
-                    style={{ width: `${NOPercentage}%` }}
-                  />
-                  <div
-                    className={`h-full ${yesBarColor} transition-all duration-500`}
-                    style={{ width: `${YESPercentage}%` }}
-                  />
-                </div>
+                {totalVotes === 0 ? (
+                  <></>
+                ) : (
+                  <div className="relative h-6 w-full rounded-full overflow-hidden flex">
+                    <div
+                      className={`h-full ${noBarColor} transition-all duration-500`}
+                      style={{ width: `${NOPercentage}%` }}
+                    />
+                    <div
+                      className={`h-full ${yesBarColor} transition-all duration-500`}
+                      style={{ width: `${YESPercentage}%` }}
+                    />
+                  </div>
+                )}
 
                 <div className="flex justify-between items-center text-sm font-mono text-foreground/80 pt-1">
                   <div className="flex items-center gap-1 text-red-500">
                     <span>NO</span>
                     <span className="font-semibold">{vote.NO}</span>
-                    <span className="text-xs">({Math.round(NOPercentage)}%)</span>
+                    <span className="text-xs">
+                      ({Math.round(NOPercentage)}%)
+                    </span>
                   </div>
-                  
 
-                  <div className="text-xs text-foreground/50">Total: {totalVotes}</div>
-                  
+                  <div className="text-xs text-foreground/50">
+                    Total: {totalVotes}
+                  </div>
 
                   <div className="flex items-center gap-1 text-green-500">
-                    <span className="text-xs">({Math.round(YESPercentage)}%)</span>
+                    <span className="text-xs">
+                      ({Math.round(YESPercentage)}%)
+                    </span>
                     <span className="font-semibold">{vote.YES}</span>
                     <span>YES</span>
                   </div>
