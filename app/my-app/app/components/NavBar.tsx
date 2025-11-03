@@ -23,7 +23,7 @@ function NavBar() {
   const [isSigning, setIsSigning] = useState(false);
 
   const navItems = [
-    { href: "/home", label: "All Votes" },
+    { href: "/all-votes", label: "All Votes" },
     { href: "/create-vote", label: "Create a vote" },
     { href: "/stats", label: "Statistics" },
   ];
