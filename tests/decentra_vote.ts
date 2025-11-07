@@ -1,17 +1,17 @@
-import * as anchor from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
-import assert from "assert";
 
+import { PublicKey, SystemProgram } from "@solana/web3.js";
+import * as anchor from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
+
+
+import * as assert from "assert";
+import crypto from "crypto";
 // Minimal test for decentra_vote program
 describe("decentra_vote (simple)", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
-  // Instead of relying on `anchor.workspace`, load the IDL directly and construct the
-  // Program instance. This avoids workspace auto-discovery issues.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const idl = require("../target/idl/decentra_vote.json");
-  // coral anchor Program takes (idl, provider) and reads programId from idl.address
-  const program = new anchor.Program(idl, provider) as unknown as anchor.Program;
+
+  const program = anchor.workspace.decentra_vote as any;
 
   // read unix_timestamp from clock sysvar account (i64 at offset 24)
   async function getClockUnixTs(): Promise<number> {
