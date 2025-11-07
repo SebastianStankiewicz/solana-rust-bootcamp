@@ -76,7 +76,7 @@ pub struct InitializeEvent<'info> {
         seeds = [
             b"event",
             creator.key().as_ref(),
-            &timestamp.to_le_bytes(), /
+            &timestamp.to_le_bytes(), 
         ],
         bump
     )]
