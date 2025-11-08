@@ -1,28 +1,59 @@
-"use client";
-import React from "react";
+// app/vote/[slug]/page.tsx
+import { web3, AnchorProvider, Program } from "@coral-xyz/anchor";
+import { PublicKey, Connection, SystemProgram } from "@solana/web3.js";
+import idl from "../../../../../target/idl/decentra_vote.json";
+import { DecentraVote } from "../../../../../target/types/decentra_vote";
+import { notFound } from "next/navigation";
+import { VoteButton } from "@/app/components/VoteButton";
 
-function Page() {
-  const dummyVote = {
-    PDA: "9xJkVt1s9...T2bL",
-    title: "Should we launch DAO rewards?",
-    YES: 128,
-    NO: 32,
-    createdAt: "2025-11-03T12:00:00Z",
-    solscanLink: "https://solscan.io/account/9xJkVt1s9...T2bL",
-  };
+interface PageProps {
+  params: Promise<{ slug: string }>; // params is now a Promise
+}
 
-  const totalVotes = dummyVote.YES + dummyVote.NO;
-  const YESPercentage = totalVotes > 0 ? (dummyVote.YES / totalVotes) * 100 : 0;
-  const NOPercentage = totalVotes > 0 ? (dummyVote.NO / totalVotes) * 100 : 0;
+export default async function Page({ params }: PageProps) {
+  const { slug } = await params; // unwrap the promise
+  let eventPda: PublicKey;
+
+  try {
+    eventPda = new PublicKey(slug);
+  } catch {
+    return notFound(); // invalid PDA
+  }
+
+  // Server-side connection
+  const connection = new Connection("https://api.devnet.solana.com");
+  const provider = new AnchorProvider(connection, {} as any, {
+    preflightCommitment: "processed",
+  });
+
+  const program = new Program<DecentraVote>(idl as DecentraVote, provider);
+
+  let eventAccount;
+  try {
+    eventAccount = await program.account.eventAccount.fetch(eventPda);
+    console.log(eventAccount);
+  } catch {
+    return notFound(); // account not found
+  }
+
+  const totalVotes = eventAccount.totalVotes.reduce((a, b) => a + Number(b), 0);
+
+  const YESPercentage =
+    totalVotes > 0 ? (eventAccount.totalVotes[0] / totalVotes) * 100 : 0;
+  const NOPercentage =
+    totalVotes > 0 ? (eventAccount.totalVotes[1] / totalVotes) * 100 : 0;
 
   let yesBarColor = "bg-green-500";
   let noBarColor = "bg-red-500";
 
-  if (dummyVote.YES > dummyVote.NO) {
+  if (eventAccount.totalVotes[0] > eventAccount.totalVotes[1]) {
     noBarColor = "bg-red-700/50"; // Dimmer red
-  } else if (dummyVote.NO > dummyVote.YES) {
+  } else if (eventAccount.totalVotes[1] > eventAccount.totalVotes[0]) {
     yesBarColor = "bg-green-700/50"; // Dimmer green
-  } else if (dummyVote.YES === dummyVote.NO && totalVotes > 0) {
+  } else if (
+    eventAccount.totalVotes[0] === eventAccount.totalVotes[1] &&
+    totalVotes > 0
+  ) {
     yesBarColor = "bg-yellow-500/70";
     noBarColor = "bg-yellow-500/70";
   }
@@ -32,20 +63,20 @@ function Page() {
       <div className="w-full max-w-4xl space-y-6">
         {/* Title */}
         <h1 className="text-4xl font-mono font-semibold text-foreground text-center">
-          {dummyVote.title}
+          {eventAccount.title}
         </h1>
 
         {/* Links */}
         <div className="text-lg text-foreground/70 flex flex-col gap-2 text-center">
           <a
-            href={dummyVote.solscanLink}
+            href={""}
             target="_blank"
             rel="noopener noreferrer"
             className="underline hover:text-foreground transition-colors"
           >
             View on Solscan
           </a>
-          <span>PDA: {dummyVote.PDA}</span>
+          <span>PDA: {slug}</span>
         </div>
 
         {/* Tug-of-War Bar */}
@@ -69,23 +100,34 @@ function Page() {
         )}
 
         {/* Statistics */}
-        <div className="flex justify-between items-center text-lg font-mono text-foreground/80">
-          <div className="text-red-500 font-semibold">
-            NO: {dummyVote.NO} ({Math.round(NOPercentage)}%)
+        <div className="flex flex-col w-full max-w-md mx-auto space-y-6">
+          {/* Vote stats */}
+          <div className="flex justify-between items-center text-lg font-mono text-foreground/80 px-4">
+            <div className="flex flex-col justify-center items-center">
+              <div className="text-red-500 font-semibold">
+                {eventAccount.choices[1]}: {eventAccount.totalVotes[1]} ({Math.round(NOPercentage)}%)
+              </div>
+            </div>
+
+            <div className="text-foreground/50 text-center">
+              Total: {totalVotes}
+            </div>
+
+            <div className="flex flex-col justify-center items-center">
+              <div className="text-green-500 font-semibold">
+              {eventAccount.choices[0]}: {eventAccount.totalVotes[0]} ({Math.round(YESPercentage)}%)
+              </div>
+            </div>
           </div>
-          <div className="text-foreground/50 text-center">Total: {totalVotes}</div>
-          <div className="text-green-500 font-semibold">
-            YES: {dummyVote.YES} ({Math.round(YESPercentage)}%)
+
+          {/* Vote buttons */}
+          <div className="flex justify-center gap-4 px-4">
+            <VoteButton eventPda={eventPda.toBase58()} />
           </div>
         </div>
 
         {/* Date of creation */}
-        <div className="text-sm text-foreground/50 text-center">
-          Created: {new Date(dummyVote.createdAt).toLocaleString()}
-        </div>
       </div>
     </div>
   );
 }
-
-export default Page;

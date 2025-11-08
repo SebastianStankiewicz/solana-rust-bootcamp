@@ -2,15 +2,12 @@
 import React, { useState } from "react";
 import { web3, AnchorProvider, Program, BN } from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { useWallet } from "@solana/wallet-adapter-react";
 import * as anchor from "@coral-xyz/anchor";
-import bs58 from "bs58";
 //import idl from "@/target/idl/ctf_anchor.json";
 import idl from "../../../../target/idl/decentra_vote.json";
 import { DecentraVote } from "../../../../target/types/decentra_vote";
-import { redirect, RedirectType } from 'next/navigation'
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useRouter } from "next/navigation";
+
 function Page() {
   const router = useRouter();
   const [data, setData] = useState({
