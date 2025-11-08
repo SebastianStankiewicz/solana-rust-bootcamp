@@ -8,12 +8,18 @@ import bs58 from "bs58";
 //import idl from "@/target/idl/ctf_anchor.json";
 import idl from "../../../../target/idl/decentra_vote.json";
 import { DecentraVote } from "../../../../target/types/decentra_vote";
-
+import { redirect, RedirectType } from 'next/navigation'
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-
-
+import { useRouter } from "next/navigation";
 function Page() {
-  const [data, setData] = useState({ title: "", oneLiner: "" });
+  const router = useRouter();
+  const [data, setData] = useState({
+    title: "",
+    oneLiner: "",
+    leftSide: "",
+    rightSide: "",
+    deadline: ""
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,14 +44,13 @@ function Page() {
         [Buffer.from("event"), creator.toBuffer(), tsBuf],
         program.programId
       );
-  
 
       const title = data.title;
       const description = data.oneLiner;
-      const choices = ["Yes", "No"]; // example choices, or add form inputs for this
-      const deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes from now
-      console.log("THIS WORKED EVENT PDA BELOW")
-      console.log(eventPda)
+      const choices = [data.leftSide, data.rightSide];
+      const deadline = Math.floor(Date.now() / 1000) + data.deadline; // 10 minutes from now
+      console.log("THIS WORKED EVENT PDA BELOW");
+      console.log(eventPda);
       const tx = await program.methods
         .initializeEvent(
           title,
@@ -64,6 +69,7 @@ function Page() {
 
       console.log("Vote event created on-chain. Tx:", tx);
       console.log("Event PDA:", eventPda.toBase58());
+      router.replace(`/vote/${eventPda.toBase58()}`);
     } catch (err) {
       console.error("Failed to create vote event:", err);
     }
@@ -108,11 +114,66 @@ function Page() {
               name="oneLiner"
               value={data.oneLiner}
               onChange={handleChange}
-              placeholder="Enter one-liner"
+              placeholder="Short description"
+              className="w-full bg-background border border-foreground/10 rounded-lg px-3 py-2 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-foreground/20"
+            />
+          </div>
+          <div className="flex flex-row justify-between gap-5">
+            <div className="flex flex-col items-center">
+              <label
+                className="block text-sm font-medium text-foreground/70 mb-1 font-mono"
+                htmlFor="leftSide"
+              >
+                Left hand side
+              </label>
+              <input
+                id="leftSide"
+                type="text"
+                name="leftSide"
+                value={data.leftSide}
+                onChange={handleChange}
+                placeholder="Option 1"
+                className="w-full bg-background border border-foreground/10 rounded-lg px-3 py-2 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-foreground/20"
+              />
+            </div>
+
+            <div className="flex flex-col items-center">
+              <label
+                className="block text-sm font-medium text-foreground/70 mb-1 font-mono"
+                htmlFor="rightSide"
+              >
+                Right hand side
+              </label>
+              <input
+                id="rightSide"
+                type="text"
+                name="rightSide"
+                value={data.rightSide}
+                onChange={handleChange}
+                placeholder="Option 2"
+                className="w-full bg-background border border-foreground/10 rounded-lg px-3 py-2 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-foreground/20"
+              />
+            </div>
+          </div>
+          <div>
+            <label
+              className="block text-sm font-medium text-foreground/70 mb-1 font-mono"
+              htmlFor="deadline"
+            >
+              Deadline
+            </label>
+            <input
+              id="deadline"
+              type="text"
+              name="deadline"
+              value={data.deadline}
+              onChange={handleChange}
+              placeholder="Minutes till close"
               className="w-full bg-background border border-foreground/10 rounded-lg px-3 py-2 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-foreground/20"
             />
           </div>
         </div>
+
         <div className="flex flex-row">
           <button
             onClick={handleDeploy}
@@ -120,9 +181,6 @@ function Page() {
           >
             Deploy Vote on Chain!
           </button>
-          <div className=" text-black font-medium text-sm font-mono rounded-lg px-4 py-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-            Estimated cost: 0.1
-          </div>
         </div>
       </div>
     </div>
